@@ -1,5 +1,6 @@
 "use client";
 import axios from "axios";
+import JSZip from "jszip";
 import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 
@@ -50,6 +51,14 @@ const Uploader = () => {
         const img = await readFileAsync(allImages[i]);
         imageArray.push(img);
       }
+      const zip = new JSZip();
+      for (const image of images!) {
+        const response = await fetch(image);
+        const blob = await response.blob();
+        zip.file(`image_${images!.indexOf(image) + 1}.jpg`, blob);
+      }
+      const imagePayload = await zip.generateAsync({type:"blob"})
+      console.log(imagePayload)
       const tite = generateRandomString();
       const captureResponse = await axios.post(
         "https://webapp.engineeringlumalabs.com/api/v2/capture",
@@ -69,9 +78,9 @@ const Uploader = () => {
       setSlug(capture.slug);
       const slu = capture.slug;
       // Use the content type based on your API requirements
-      await axios.put(signedUrls.source, imageArray, {
+      await axios.put(signedUrls.source, imagePayload, {
         headers: {
-          "Content-Type": "application/octet-stream", // Adjust this content type
+          "Content-Type": "application/octet-stream", 
         },
       });
 
